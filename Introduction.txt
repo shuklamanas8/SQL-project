@@ -1,0 +1,5 @@
+Introduction:
+
+Understanding the ecological dynamics of tree seedlings is crucial for predicting their survival and growth in various environments. This dataset captures a comprehensive array of attributes related to the early life stages of trees, focusing on seedlings planted across different field plots and subplots. The dataset encompasses information on environmental factors, mycorrhizal associations, biochemical traits, and survival outcomes.
+
+The dataset includes key variables such as Seedling ID, Plot, Subplot, Species, Light levels quantified using HemiView software, soil characteristics, and various biochemical traits including arbuscular mycorrhizal fungi (AMF) and ectomycorrhizal fungi (EMF) colonization percentages. Additionally, it tracks the phenological aspects of seedlings, such as the time of harvest, census numbers, and events marking the seedling's status.

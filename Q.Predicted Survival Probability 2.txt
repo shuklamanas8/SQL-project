@@ -1,0 +1,148 @@
+Q.Predicted Survival Probability with Time-Dependent Cox Model:
+
+SELECT Species, AVG(PredictedSurvivalProbability) 
+AS AvgPredictedSurvival
+FROM (
+    SELECT Species, EXP(COUNT(*) / SUM(Event))
+    AS PredictedSurvivalProbability FROM tree_data
+    WHERE Event = 1 AND Time <= 365
+    GROUP BY Species) Subquery GROUP BY Species;
+
+
+
+
+Q. Count the number of seedlings per species::
+SELECT Species, COUNT(*) AS SeedlingCount
+FROM tree_data
+GROUP BY Species;
+
+
+Q .Find the species with the highest and lowest average survival time:
+SELECT Species, AVG(Time) AS AvgSurvivalTime
+FROM tree_data
+GROUP BY Species
+ORDER BY AvgSurvivalTime DESC
+LIMIT 1;
+SELECT Species, AVG(Time) AS AvgSurvivalTime
+FROM tree_data
+GROUP BY Species ORDER BY AvgSurvivalTime ASC LIMIT 1;
+
+
+
+Q .Calculate the average NSC for each conspecific category
+SELECT Conspecific, AVG(NSC) AS AvgNSC
+FROM tree_data
+WHERE Plot IN (
+    SELECT Plot
+    FROM tree_data
+    WHERE Light_Cat = 'high'
+)
+GROUP BY Conspecific;
+
+#Join to find the average survival time for each 
+subplot category with high light levels:
+SELECT t.Subplot, AVG(t.Time) AS AvgSurvivalTime
+FROM (
+    SELECT s.Subplot, s.Time FROM tree_data s
+    JOIN tree_data so ON s.Soil = so.Soil
+    WHERE s.Event = 1 AND so.Light_Cat = 'high'
+    GROUP BY s.Subplot, s.Time
+) t
+GROUP BY t.Subplot;
+
+
+Q.Join to find the species with the highest
+ and lowest average AMF colonization: 
+SELECT t.Species, AVG(t.AMF) AS AvgAMFColonization
+FROM (
+    SELECT s.Species, s.AMF
+    FROM tree_data s GROUP BY s.Species, s.AMF
+) t
+GROUP BY t.Species ORDER BY AvgAMFColonization DESC
+LIMIT 1;
+SELECT t.Species, AVG(t.AMF) AS AvgAMFColonization
+FROM (
+    SELECT s.Species, s.AMF FROM tree_data s
+    GROUP BY s.Species, s.AMF
+) t GROUP BY t.Species
+ORDER BY AvgAMFColonization ASC LIMIT 1;
+
+
+
+
+Q.Join to get information about seedlings with
+ their soil details:
+SELECT s.*, so.*
+FROM tree_data s
+JOIN tree_data so ON s.Soil = so.Soil;
+
+
+Q.Calculate the percentage change in survival time between
+ consecutive censuses for each species:
+SELECT
+    Species,Census,
+    (MAX(Time) - MIN(Time)) * 100.0 / MIN(Time) AS PercentageChange
+FROM tree_data
+WHERE Event = 1 GROUP BY Species, Census
+
+Q.Identify the plots where the number of dead seedlings exceeds 
+the number of alive seedlings::
+SELECT Plot
+FROM (
+    SELECT Plot, SUM(CASE WHEN Event = 1 THEN 1 ELSE 0 END) AS DeadSeedlings, SUM(CASE WHEN Alive = 'X' THEN 1 ELSE 0 END) AS AliveSeedlings
+    FROM tree_data GROUP BY Plot
+) Subquery
+WHERE DeadSeedlings > AliveSeedlings;
+
+
+
+Q.Calculate the survival probability for each seedling,
+ considering the ratio of AMF to EMF colonization:
+SELECT *,
+       AMF / NULLIF(AMF + EMF, 0) AS AMF_Probability,
+       EMF / NULLIF(AMF + EMF, 0) AS EMF_Probability
+FROM tree_data
+
+
+
+
+Q.Identify the subplots where the difference in average NSC between alive and dead 
+seedlings is the highest:
+WITH NSCDifference AS (
+    SELECT Subplot, AVG(CASE WHEN Event = 1 THEN NSC ELSE 0 END) -
+                      AVG(CASE WHEN Event = 0 THEN NSC ELSE 0 END) AS AvgNSCDifference
+    FROM tree_data
+    GROUP BY Subplot
+)
+SELECT Subplot, AvgNSCDifference
+FROM NSCDifference
+ORDER BY AvgNSCDifference DESC
+LIMIT 1;
+
+
+Q.Calculate the average survival time for each conspecific category with more than 5 seedlings:
+
+SELECT Conspecific, AVG(Time) AS AvgSurvivalTime
+FROM tree_data
+WHERE Event = 1
+GROUP BY Conspecific
+HAVING COUNT(*) > 5;
+
+Q.Calculate the average survival time for 
+each conspecific category with more than 5 seedlings:
+SELECT (COUNT(CASE WHEN Harvest = 1 THEN 1 END) * 100 / COUNT(*)) AS HarvestPercentage
+FROM tree_data;
+
+
+
+Q.Count the number of seedlings per species::
+SELECT Species, COUNT(*) AS SeedlingCount
+FROM tree_data
+GROUP BY Species;
+
+Q.Show the unique combinations of soil species and 
+conspecific status::
+SELECT DISTINCT Soil, Conspecific
+FROM tree_data;
+
+
